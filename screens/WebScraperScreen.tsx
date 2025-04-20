@@ -22,52 +22,43 @@ export default function WebScraperScreen({ route, navigation }) {
   const [scrapingComplete, setScrapingComplete] = useState(false);
   const webViewRef = useRef(null);
 
-  // JavaScript to inject for scraping
   const INJECTED_JAVASCRIPT = `
     (function() {
-      // Get page title
       const pageTitle = document.title;
       
-      // Get all text content
       const bodyText = document.body.innerText;
       
-      // Get all links
       const links = Array.from(document.querySelectorAll('a')).map(a => ({
         text: a.innerText.trim(),
         href: a.href
       })).filter(link => link.text && link.href);
       
-      // Get all images
       const images = Array.from(document.querySelectorAll('img')).map(img => ({
         src: img.src,
         alt: img.alt
       })).filter(img => img.src);
       
-      // Get meta data
       const metaTags = Array.from(document.querySelectorAll('meta')).map(meta => ({
         name: meta.getAttribute('name') || meta.getAttribute('property'),
         content: meta.getAttribute('content')
       })).filter(meta => meta.name && meta.content);
       
-      // Get headings
       const headings = Array.from(document.querySelectorAll('h1, h2, h3')).map(h => ({
         type: h.tagName,
         text: h.innerText.trim()
       })).filter(h => h.text);
       
-      // Create result object
       const result = {
         pageTitle,
-        bodyText: bodyText.substring(0, 10000), // Limit text size
-        links: links.slice(0, 100), // Limit number of links
-        images: images.slice(0, 50), // Limit number of images
+        bodyText: bodyText.substring(0, 10000),
+        links: links.slice(0, 100),
+        images: images.slice(0, 50),
         metaTags,
         headings,
         url: window.location.href,
         timestamp: new Date().toISOString()
       };
       
-      // Send data back to React Native
       window.ReactNativeWebView.postMessage(JSON.stringify(result));
       
       return true;
@@ -90,11 +81,9 @@ export default function WebScraperScreen({ route, navigation }) {
     if (!scrapedData) return;
     
     try {
-      // Get existing saved scrapes
       const savedScrapesJson = await AsyncStorage.getItem('savedScrapes');
       const savedScrapes = savedScrapesJson ? JSON.parse(savedScrapesJson) : [];
       
-      // Add new scrape with unique ID
       const newScrape = {
         id: Date.now().toString(),
         url: scrapedData.url,
@@ -103,7 +92,6 @@ export default function WebScraperScreen({ route, navigation }) {
         data: scrapedData
       };
       
-      // Save updated list
       const updatedScrapes = [newScrape, ...savedScrapes];
       await AsyncStorage.setItem('savedScrapes', JSON.stringify(updatedScrapes));
       
@@ -163,7 +151,6 @@ export default function WebScraperScreen({ route, navigation }) {
           onLoadStart={() => setIsLoading(true)}
           onLoadEnd={() => {
             setIsLoading(false);
-            // Inject JavaScript to scrape the page after it loads
             webViewRef.current.injectJavaScript(INJECTED_JAVASCRIPT);
           }}
           onMessage={handleMessage}
